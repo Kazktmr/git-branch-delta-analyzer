@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "highlight_name": "Critical Paths",
+  "paths": [
+    "src/core/",
+    "src/ai/",
+    "src/plugins/",
+    "README.md"
+  ]
+}
