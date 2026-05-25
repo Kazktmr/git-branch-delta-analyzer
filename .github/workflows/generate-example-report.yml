@@ -26,37 +26,37 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install gitpython pandas openpyxl plotly
+          pip install gitpython pandas openpyxl plotly kaleido
 
-      - name: Generate example report (OpenClaw 7-day delta)
+      - name: Generate example report
         run: |
-          mkdir -p example_reports/latest
+          mkdir -p example_reports/temp
           python branch_delta_analyzer.py \
             --github-repo openclaw/openclaw \
             --base main \
             --days-ago 7 \
-            --output example_reports/latest \
-            || echo "Warning: Analyzer script failed - continuing"
+            --output example_reports/temp || echo "Analyzer had issues - continuing with placeholders"
 
-      - name: Debug: List generated files
-        run: ls -la example_reports/latest || true
-
-      - name: Rename to LATEST files
+      - name: Prepare Latest Reports
         run: |
-          cd example_reports/latest
-          ls -la
-          if [ -f delta_report_*.html ]; then
-            mv delta_report_*.html LATEST_delta_report.html
+          mkdir -p example_reports/latest
+          # Copy HTML report
+          if ls example_reports/temp/delta_report_*.html 1> /dev/null 2>&1; then
+            cp example_reports/temp/delta_report_*.html example_reports/latest/LATEST_delta_report.html
+            echo "HTML report copied"
           else
-            echo "No HTML generated - creating empty placeholder for now"
-            touch LATEST_delta_report.html
+            echo "No HTML report found, creating placeholder"
+            echo "<h1>Report generation had issues. Check workflow logs.</h1>" > example_reports/latest/LATEST_delta_report.html
           fi
-          if [ -f delta_summary_*.xlsx ]; then
-            mv delta_summary_*.xlsx LATEST_delta_summary.xlsx
+          # Copy Excel report
+          if ls example_reports/temp/delta_summary_*.xlsx 1> /dev/null 2>&1; then
+            cp example_reports/temp/delta_summary_*.xlsx example_reports/latest/LATEST_delta_summary.xlsx
+            echo "Excel report copied"
           else
-            echo "No Excel generated - creating empty placeholder for now"
-            touch LATEST_delta_summary.xlsx
+            echo "No Excel report found, creating placeholder"
+            touch example_reports/latest/LATEST_delta_summary.xlsx
           fi
+          ls -la example_reports/latest
 
       - name: Commit latest example report
         uses: stefanzweifel/git-auto-commit-action@v5
@@ -64,5 +64,5 @@ jobs:
           commit_message: 'chore: update latest example report (auto-generated)'
           file_pattern: example_reports/latest/**
           branch: main
-          commit_user_name: github-actions
-          commit_user_email: github-actions@github.com
+          commit_user_name: github-actions[bot]
+          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
