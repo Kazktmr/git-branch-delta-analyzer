@@ -35,19 +35,25 @@ jobs:
             --github-repo openclaw/openclaw \
             --base main \
             --compare main@{7.days.ago} \
-            --output example_reports
+            --output example_reports/latest \
+            || echo "Warning: Analyzer script failed"
 
-      - name: Copy latest reports for easy access
+      - name: Rename to LATEST files
         run: |
-          # Find the most recent report files
-          latest_html=$(ls -t example_reports/delta_report_*.html | head -n 1)
-          latest_xlsx=$(ls -t example_reports/delta_summary_*.xlsx | head -n 1)
-          cp "$latest_html" example_reports/latest/LATEST_delta_report.html
-          cp "$latest_xlsx" example_reports/latest/LATEST_delta_summary.xlsx
+          cd example_reports/latest
+          ls -la
+          if [ -f delta_report_*.html ]; then
+            mv delta_report_*.html LATEST_delta_report.html
+          fi
+          if [ -f delta_summary_*.xlsx ]; then
+            mv delta_summary_*.xlsx LATEST_delta_summary.xlsx
+          fi
 
-      - name: Commit example report
+      - name: Commit latest example report
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'chore: update latest example report (auto-generated from OpenClaw 7-day delta)'
-          file_pattern: example_reports/**
+          commit_message: 'chore: update latest example report (auto-generated)'
+          file_pattern: example_reports/latest/**
           branch: main
+          commit_user_name: github-actions
+          commit_user_email: github-actions@github.com
