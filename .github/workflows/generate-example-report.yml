@@ -34,9 +34,12 @@ jobs:
           python branch_delta_analyzer.py \
             --github-repo openclaw/openclaw \
             --base main \
-            --compare main@{7.days.ago} \
+            --days-ago 7 \
             --output example_reports/latest \
-            || echo "Warning: Analyzer script failed"
+            || echo "Warning: Analyzer script failed - continuing"
+
+      - name: Debug: List generated files
+        run: ls -la example_reports/latest || true
 
       - name: Rename to LATEST files
         run: |
@@ -44,9 +47,15 @@ jobs:
           ls -la
           if [ -f delta_report_*.html ]; then
             mv delta_report_*.html LATEST_delta_report.html
+          else
+            echo "No HTML generated - creating empty placeholder for now"
+            touch LATEST_delta_report.html
           fi
           if [ -f delta_summary_*.xlsx ]; then
             mv delta_summary_*.xlsx LATEST_delta_summary.xlsx
+          else
+            echo "No Excel generated - creating empty placeholder for now"
+            touch LATEST_delta_summary.xlsx
           fi
 
       - name: Commit latest example report
