@@ -30,16 +30,24 @@ jobs:
 
       - name: Generate example report (OpenClaw 7-day delta)
         run: |
-          mkdir -p example_reports
+          mkdir -p example_reports/latest
           python branch_delta_analyzer.py \
             --github-repo openclaw/openclaw \
             --base main \
             --compare main@{7.days.ago} \
             --output example_reports
 
+      - name: Copy latest reports for easy access
+        run: |
+          # Find the most recent report files
+          latest_html=$(ls -t example_reports/delta_report_*.html | head -n 1)
+          latest_xlsx=$(ls -t example_reports/delta_summary_*.xlsx | head -n 1)
+          cp "$latest_html" example_reports/latest/LATEST_delta_report.html
+          cp "$latest_xlsx" example_reports/latest/LATEST_delta_summary.xlsx
+
       - name: Commit example report
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'chore: update example report (auto-generated from OpenClaw 7-day delta)'
+          commit_message: 'chore: update latest example report (auto-generated from OpenClaw 7-day delta)'
           file_pattern: example_reports/**
           branch: main
