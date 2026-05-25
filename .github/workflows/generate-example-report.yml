@@ -28,14 +28,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install gitpython pandas openpyxl plotly kaleido
 
+      - name: Clone example repository with full history
+        run: |
+          rm -rf openclaw
+          git clone --depth=0 https://github.com/openclaw/openclaw.git openclaw
+          cd openclaw
+          git log --oneline -10
+          echo "Cloned openclaw with full history"
+
       - name: Generate example report
         run: |
           mkdir -p example_reports/temp
           python branch_delta_analyzer.py \
-            --github-repo openclaw/openclaw \
+            --repo-path ./openclaw \
             --base main \
             --days-ago 7 \
-            --output example_reports/temp || echo "Analyzer had issues - continuing with placeholders"
+            --output example_reports/temp || echo "Analyzer exited with issues"
 
       - name: Prepare Latest Reports
         run: |
@@ -43,19 +51,30 @@ jobs:
           # Copy HTML report
           if ls example_reports/temp/delta_report_*.html 1> /dev/null 2>&1; then
             cp example_reports/temp/delta_report_*.html example_reports/latest/LATEST_delta_report.html
-            echo "HTML report copied"
+            echo "✅ HTML report copied successfully"
           else
-            echo "No HTML report found, creating placeholder"
-            echo "<h1>Report generation had issues. Check workflow logs.</h1>" > example_reports/latest/LATEST_delta_report.html
+            echo "⚠️ No HTML report found, creating minimal placeholder"
+            cat > example_reports/latest/LATEST_delta_report.html << EOF
+<!DOCTYPE html>
+<html>
+<head><title>Example Report - Generation Issue</title></head>
+<body>
+<h1>⚠️ Report generation had issues</h1>
+<p>Please check the latest workflow run logs in the Actions tab.</p>
+</body>
+</html>
+EOF
           fi
+
           # Copy Excel report
           if ls example_reports/temp/delta_summary_*.xlsx 1> /dev/null 2>&1; then
             cp example_reports/temp/delta_summary_*.xlsx example_reports/latest/LATEST_delta_summary.xlsx
-            echo "Excel report copied"
+            echo "✅ Excel report copied successfully"
           else
-            echo "No Excel report found, creating placeholder"
+            echo "⚠️ No Excel report found"
             touch example_reports/latest/LATEST_delta_summary.xlsx
           fi
+
           ls -la example_reports/latest
 
       - name: Commit latest example report
